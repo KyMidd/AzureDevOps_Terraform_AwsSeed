@@ -87,6 +87,41 @@ POLICY
   }
 }
 
+# Create IAM policy to allow ADO IAM user to assume ADO IAM role
+resource "aws_iam_policy" "ado_iam_policy_assume_role" {
+  name = "${var.aws_iam_policy_assume_name}"
+
+  policy = <<POLICY
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "AllowAssumeRole",
+      "Effect": "Allow",
+      "Action": [
+        "sts:AssumeRole"
+      ],
+      "Resource": "${aws_iam_user.ado_iam_user.arn}"
+    },
+    {
+      "Sid": "AllowAllActions",
+      "Effect": "Allow",
+      "Action": [
+        "*"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
+POLICY
+}
+
+# Attach IAM assume role to User
+resource "aws_iam_user_policy_attachment" "iam_user_assume_attach" {
+  user       = "${aws_iam_user.ado_iam_user.name}"
+  policy_arn = "${aws_iam_policy.ado_iam_policy_assume_role.arn}"
+}
+
 # Create an IAM policy to list what ADO is able to do in AWS
 resource "aws_iam_policy" "ado_iam_policy_permits" {
   name = "${var.aws_iam_policy_permits_name}"
@@ -124,39 +159,4 @@ POLICY
 resource "aws_iam_role_policy_attachment" "ado_iam_policy_permits_attach" {
   role       = "${aws_iam_role.ado_iam_role.name}"
   policy_arn = "${aws_iam_policy.ado_iam_policy_permits.arn}"
-}
-
-# Create IAM policy to allow ADO IAM user to assume ADO IAM role
-resource "aws_iam_policy" "ado_iam_policy_assume_role" {
-  name = "${var.aws_iam_policy_assume_name}"
-
-  policy = <<POLICY
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Sid": "AllowAssumeRole",
-      "Effect": "Allow",
-      "Action": [
-        "sts:AssumeRole"
-      ],
-      "Resource": "${aws_iam_user.ado_iam_user.arn}"
-    },
-    {
-      "Sid": "AllowAllActions",
-      "Effect": "Allow",
-      "Action": [
-        "*"
-      ],
-      "Resource": "*"
-    }
-  ]
-}
-POLICY
-}
-
-# Attach IAM assume role to User
-resource "aws_iam_user_policy_attachment" "iam_user_assume_attach" {
-  user       = "${aws_iam_user.ado_iam_user.name}"
-  policy_arn = "${aws_iam_policy.ado_iam_policy_assume_role.arn}"
 }
