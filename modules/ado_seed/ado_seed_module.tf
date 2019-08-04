@@ -99,7 +99,7 @@ resource "aws_iam_policy" "ado_iam_policy_permits" {
       "Sid": "AzureDevOpsPermitEc2",
       "Effect": "Allow",
       "Action": [
-        "ec2:"
+        "ec2:*"
       ],
       "Resource": [
         "*"
