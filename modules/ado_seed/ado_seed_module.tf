@@ -62,33 +62,8 @@ resource "aws_iam_user" "ado_iam_user" {
   }
 }
 
-# Create an IAM role for ADO to assume when connecting
-resource "aws_iam_role" "ado_iam_role" {
-  name               = "${var.ado_iam_role_name}"
-  assume_role_policy = <<POLICY
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Principal": {
-        "AWS": "${aws_iam_user.ado_iam_user.arn}"
-      },
-      "Action": [
-        "sts:AssumeRole"
-      ]
-    }
-  ]
-}
-POLICY
-
-  tags = {
-    BuiltBy = "Terraform"
-  }
-}
-
-# Create IAM policy to allow ADO IAM user to assume ADO IAM role
-resource "aws_iam_policy" "ado_iam_policy_assume_role" {
+# Create IAM policy for the ADO IAM user
+resource "aws_iam_policy" "ado_iam_policy" {
   name = "${var.aws_iam_policy_assume_name}"
 
   policy = <<POLICY
@@ -96,15 +71,15 @@ resource "aws_iam_policy" "ado_iam_policy_assume_role" {
   "Version": "2012-10-17",
   "Statement": [
     {
-      "Sid": "AllowAssumeRole",
+      "Sid": "AllowS3Read",
       "Effect": "Allow",
       "Action": [
-        "sts:AssumeRole"
+        "s3:*"
       ],
-      "Resource": "${aws_iam_user.ado_iam_user.arn}"
+      "Resource": "${aws_s3_bucket.state_bucket.arn}"
     },
     {
-      "Sid": "AllowAllActions",
+      "Sid": "AllowAllPermissions",
       "Effect": "Allow",
       "Action": [
         "*"
@@ -119,44 +94,5 @@ POLICY
 # Attach IAM assume role to User
 resource "aws_iam_user_policy_attachment" "iam_user_assume_attach" {
   user       = "${aws_iam_user.ado_iam_user.name}"
-  policy_arn = "${aws_iam_policy.ado_iam_policy_assume_role.arn}"
-}
-
-# Create an IAM policy to list what ADO is able to do in AWS
-resource "aws_iam_policy" "ado_iam_policy_permits" {
-  name = "${var.aws_iam_policy_permits_name}"
-
-  policy = <<POLICY
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Sid": "AzureDevOpsPermitEc2",
-      "Effect": "Allow",
-      "Action": [
-        "ec2:*"
-      ],
-      "Resource": [
-        "*"
-      ]
-    },
-    {
-      "Sid": "AzureDevOpsPermitS3State",
-      "Effect": "Allow",
-      "Action": [
-        "s3:*"
-      ],
-      "Resource": [
-        "${aws_s3_bucket.state_bucket.arn}/*"
-      ]
-    }
-  ]
-}
-POLICY
-}
-
-# Attach the IAM policy to the role
-resource "aws_iam_role_policy_attachment" "ado_iam_policy_permits_attach" {
-  role       = "${aws_iam_role.ado_iam_role.name}"
-  policy_arn = "${aws_iam_policy.ado_iam_policy_permits.arn}"
+  policy_arn = "${aws_iam_policy.ado_iam_policy.arn}"
 }
