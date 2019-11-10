@@ -4,7 +4,7 @@
 
 # Build an S3 bucket to store TF state
 resource "aws_s3_bucket" "state_bucket" {
-  bucket = "${var.name_of_s3_bucket}"
+  bucket = var.name_of_s3_bucket
 
   # Tells AWS to encrypt the S3 bucket at rest by default
   server_side_encryption_configuration {
@@ -32,7 +32,7 @@ resource "aws_s3_bucket" "state_bucket" {
 
 # Build a DynamoDB to use for terraform state locking
 resource "aws_dynamodb_table" "tf_lock_state" {
-  name         = "${var.dynamo_db_table_name}"
+  name         = var.dynamo_db_table_name
 
   # Pay per request is cheaper for low-i/o applications, like our TF lock state
   billing_mode = "PAY_PER_REQUEST"
@@ -47,14 +47,14 @@ resource "aws_dynamodb_table" "tf_lock_state" {
   }
 
   tags = {
-    Name    = "${var.dynamo_db_table_name}"
+    Name    = var.dynamo_db_table_name
     BuiltBy = "Terraform"
   }
 }
 
 # Creates an IAM user for ADO to connect as - e.g., Authentication
 resource "aws_iam_user" "ado_iam_user" {
-  name = "${var.iam_user_name}"
+  name = var.iam_user_name
   path = "/"
 
   tags = {
@@ -64,7 +64,7 @@ resource "aws_iam_user" "ado_iam_user" {
 
 # Create IAM policy for the ADO IAM user
 resource "aws_iam_policy" "ado_iam_policy" {
-  name = "${var.aws_iam_policy_assume_name}"
+  name = var.aws_iam_policy_assume_name
 
   policy = <<POLICY
 {
@@ -93,6 +93,6 @@ POLICY
 
 # Attach IAM assume role to User
 resource "aws_iam_user_policy_attachment" "iam_user_assume_attach" {
-  user       = "${aws_iam_user.ado_iam_user.name}"
-  policy_arn = "${aws_iam_policy.ado_iam_policy.arn}"
+  user       = aws_iam_user.ado_iam_user.name
+  policy_arn = aws_iam_policy.ado_iam_policy.arn
 }
